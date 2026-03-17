@@ -155,8 +155,8 @@ ssh -i PrivateKey.pem ec2-user@aws.com
 
 ## S3 Buckets
 
-* S3 have stable and controlled data sovereignty
-* The blast radius of an S3 bucket will be contained within the region
+* `S3` have stable and controlled data sovereignty
+* The blast radius of an `S3 bucket` will be contained within the region
 * Bucket name has to be globally unique
 * Everything is stored at the root level
 	* Flat Structure
@@ -194,3 +194,232 @@ ssh -i PrivateKey.pem ec2-user@aws.com
 * Unlimited objects in buckets (0 bytes - 5TB)
 * `Key = Name` and `Value = Data`
 * **5000 users** per AWS Account
+
+# AWS CloudFormation
+
+* `CloudFormation`
+    * Is an *Infrastructure as Code (IaC)* product in AWS that allows automation of infrastructure creation, update, and deletion
+* Templates are created in `YAML/JSON` can be used to interact with resources in an AWS Account
+
+![CloudFormation Intro](./diagrams/cloud-formation.png)
+
+## CloudFormation Basics
+
+### Resources
+
+![Resources - CloudFormation](./diagrams/cloud-formation-resources.png)
+
+A `Resource` section of a template is the only mandatory part of `CloudFormation` template. `CloudFormation` creats a stack, which helps keep *Template* and *Physical* resources in sync.
+
+### Description
+
+![Description - CloudFormation](./diagrams/cloud-formation-description.png)
+
+If using `AwsTemplateFormatVersion` and `Description` in the same *yml* file at the same time then the `Description` must come right after the *AwsTemplateFormatVersion*. If the *AwsTemplateFormatVersion* is not defined it is then assumed.
+
+### Metadata
+
+![Metadata - CloudFormation](./diagrams/cloud-formation-metadata.png)
+
+`Metadata` controls how the UI presents the templates.
+
+### Conditions
+
+![Conditions - CloudFormation](./diagrams/cloud-formation-conditions.png)
+
+### Logical Resource
+
+![Logical Resource Example](./diagrams/cloud-formation-logical-resource.png)
+
+### Example
+
+
+```yaml
+
+Parameters:
+	LatestAmiId:
+		# We want the latest AMI for a given distribution
+		# We are asking for the latest ami for amazon linux 2023 in whichever region youre in
+		Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+		Default: '/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64'
+	SSHandWebLocation:
+		Description: The IP address range that can be used to SSH to the EC2 instances
+		Type: String
+		MinLength: '9'
+		MaxLength: '18'
+		Default: 0.0.0.0/0
+		AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+		ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x. Default is 0.0.0.0/0 and is less           safe.
+
+Resources:
+	EC2Instance:
+		Type: AWS::EC2::Instance
+		Properties:
+		InstanceType: "t2.micro"
+		ImageId: !Ref LatestAmiId
+		IamInstanceProfile: !Ref SessionManagerInstanceProfile
+		SecurityGroups:
+		- !Ref InstanceSecurityGroup
+	InstanceSecurityGroup:
+		Type: 'AWS::EC2::SecurityGroup'
+		Properties:
+		GroupDescription: Enable SSH access via port 22 and 80
+		SecurityGroupIngress:
+			# allowing two different types of traffic into whatever sg is attached to
+			- IpProtocol: tcp
+			FromPort: '22'
+			ToPort: '22'
+			CidrIp: !Ref SSHandWebLocation
+			- IpProtocol: tcp
+			FromPort: '80'
+			ToPort: '80'
+			CidrIp: !Ref SSHandWebLocation
+	# Creates an instance role and an instance role profile
+	SessionManagerRole:
+		Type: 'AWS::IAM::Role'
+		Properties:
+		AssumeRolePolicyDocument:
+		Version: 2012-10-17
+		Statement:
+		- Effect: Allow
+		Principal:
+		Service:
+		- ec2.amazonaws.com
+		Action:
+		- 'sts:AssumeRole'
+		Path: /
+		ManagedPolicyArns:
+		- "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+		SessionManagerInstanceProfile:
+		Type: 'AWS::IAM::InstanceProfile'
+		Properties:
+		Path: /
+		Roles:
+		- !Ref SessionManagerRole
+
+# When the stack is created it will have some outputs
+# Ref (function) -> references another part of the cloud formation template
+# GetAtt (function) -> refer to another part inside cloud formation template but can pick can from different data the thing generates
+Outputs:
+# Output to get the instance ID
+InstanceId:
+	Description: InstanceId of the newly created EC2 instance
+	Value: !Ref EC2Instance
+# The Availability Zone the instance is in
+AZ:
+	Description: Availability Zone of the newly created EC2 instance
+	Value: !GetAtt
+	- EC2Instance
+	- AvailabilityZone
+# The public dns name for the instance
+PublicDNS:
+	Description: Public DNSName of the newly created EC2 instance
+	Value: !GetAtt
+	- EC2Instance
+	- PublicDnsName
+# The public ip address for the ec2 instance
+PublicIP:
+	Description: Public IP address of the newly created EC2 instance
+	Value: !GetAtt
+	- EC2Instance
+	- PublicIp
+```
+
+# CloudWatch
+
+`CloudWatch` is a core supporting service within AWS which provides metric, log and event management services. It's used through other AWS services for health and performance monitoring, log management and nerveless architectures. 
+
+## CloudWatch Basics
+
+* Collects and manages operational data
+* Metrics on AWS products, apps, and on-premises
+* `CloudWatch Logs` AWS products, apps, and on premises
+* `CloudWatch Events`
+    * If an AWS service does something, maybe an `EC2` instance is terminated, started, stopped, then `CloudWatch Events` will generate an event which can perform another action
+    * Generate an event to do something at a certain time of day or certain days of the week
+
+![CloudWatch](./diagrams/cloudwatch.png)
+
+# Shared Responsibility Model
+
+The Shared Responsibility Model is how AWS provide clarity around which areas of systems security are theirs and which are owned by the customer.
+
+![High Level Shared Model](./diagrams/high-level-shared-model.png)
+
+![alt text](./diagrams/detail-level-shared-model.png)
+Red is what AWS is responsible for.
+
+# High Availability (HA) vs Fault Toulerance (FT) vs Diaster Recovery (DR)
+
+## High Availabilit (HA)
+
+* Aims to ensure an agreed level of operational performance, usually uptime, for a higher than normal period
+* Goal: Maximize system online time
+* User disruption is acceptable
+* Achieved by having redundant/extra equipment
+* Analogy: You switch tires to get back on the road as fast as possible. You don't drive through the failure
+
+## Fault Tolerance (FT)
+
+* The property that enables a system to continue operating properly in the event of one or more component failures
+* Goal: Operate through failure without disruption
+* Analgoy: A plane with extra engines. Backup engines are on standby and kick in automatically if one fails with no interruption to the flight
+
+## Diaster Recovery (DR)
+
+* A set of policies, tools, and procedures to enable the recovery or continuation of vital technology infrastructure following a natural or human-induced diaster
+* Goal: Recover when HA and FT have failed
+* Analogy: An ejection system on a plane, when all else fails it saves the pilot
+
+# Route53
+
+* Register Domains
+* Host Zones managed name servers
+* **Global Service**
+    * Meaning single database
+* **Globally Resilient**
+    * Can operate with the failure of one or more regions
+
+## Hosted Zones
+
+* Can be public
+* Zone Files in AWS
+* Hosted on four managed name servers
+* Or private
+	* means it is linked to VPCs
+* Stores records which are *recordsets (used inside of Route53)*
+
+## DNS Records
+
+### A Records
+
+* Map hostnames to IP address
+* *A* record maps to *IPv4*
+* *AAAA* record maps to *IPv6*
+
+![A Records](./diagrams/a-records.png)
+
+### NS Records
+
+* Which allow delegation to occur in *DNS*
+
+![NS Records](./diagrams/ns-records.png)
+
+### CNAME Records
+
+* Lets you create the equivalent to DNS shortcuts
+* *ftp/mail/www CNAME* records will all point to the same IPv4 address
+* Use *CNAME* to reduce admin overhead
+* *CNAME* cannot point to IP addresses only other names
+
+![CNAME Records](./diagrams/cname-records.png)
+
+### MX Record
+
+* Lower values for priority have higher priority
+
+![MX Record](./diagrams/mx-record.png)
+
+### TXT Record
+
+![TXT Record](./diagrams/txt-record.png)
