@@ -182,7 +182,7 @@ Each node in a load balancer distributes traffic evenly across all registered in
 
 ### ASG Architecture
 
-[!ASG Architecture](./diagrams/asg-arch.png)
+![ASG Architecture](./diagrams/asg-arch.png)
 
 ### Scaling Policies
 
