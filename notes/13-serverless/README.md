@@ -78,9 +78,7 @@
 - Functions use a runtime (Python 3.10)
 - Functions are loaded and run in runtime environments
 - The environment has a direct memory (indirect CPU) allocation
-- You are billed for the duration that a function rungs
-- **Docker is an anti-pattern for Lambda**
-  - Docker refers to containerize computing, using a specific docker image to spin up an image to use in a containerize compute environment (ECS). Do not confuse Docker/Docker Container Images with images used for Lambda. The only thing that they share is you can use your existing build processes to build Lambda images
+- You are billed for the duration that a function runs
 - Now you can also use container images with Lambda. 
   - That means you are using your **existing** container build processes, the same one you use to create Docker images
   - Instead you're creating specific images designed to run inside the Lambda environment.
@@ -151,9 +149,6 @@
 * `$Latest` points at the latest version of lambda function
 * Aliases (DEV, Stage, PROD) point at a version (can be changed)
 
-### Lambda Event Source Mappings
-
-![Lambda Event Source Mappings](./diagrams/lambda-event-source-mapping.png)
 
 ## CloudWatch Events and Event Bridge
 
@@ -338,7 +333,7 @@ SQS queues are a managed message queue service in AWS which help to decouple app
 	- Single request can receive 0 - 10 messages and up to 64KB total
 - Different Types of Polling
 	- Short (Immediate) Polling
-		- can receive zero or messages
+		- can receive zero or more messages
 	- Long (waitTimeSeconds) Polling
 		- Up to 10 messages/64KB will be in a single request
 		- Will wait up to 20 seconds until messages do arrive on queue

@@ -85,7 +85,7 @@ Each node in a load balancer distributes traffic evenly across all registered in
 - **SLOWER THAN NLB**
   - This is due to more levels of the network stack to process
 - Health checks **evaluate application health**
-- Rules *8direct connections** which arrive at a listener
+- Rules **direct connections** which arrive at a listener
 - Processed in **priority order**
   - **DEFAULT RULE** = **catch all**
 - **Rule Conditions**

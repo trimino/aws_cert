@@ -54,7 +54,7 @@
   - AWS proprietary
   - The resolution happens **internally within Route53**, no extra lookups
   - Can point to resources **in the same or different hosted zone**
-  - AWS recommoneds **ALIAS over CNAME** whereever possible
+  - AWS recommends **ALIAS over CNAME** whereever possible
   - **Should be the same *type* as what the record is pointing at**
     - `ELB` given an `A` record so you have to create an `A` record `ALIAS` if you want to point at the DNS name provided by `ELB`
 
@@ -82,7 +82,7 @@
 
 - Performed by a **global fleet of health checkers**
 - Do **not block** these checkers
-- If treated as bots and blocked, it will trigger false alarms and flag your resourfce as unhealthy
+- If treated as bots and blocked, it will trigger false alarms and flag your resource as unhealthy
 - Default check interval is **every 30seconds**
 - Can be increased to **every 10 seconds** for an additional cost
 - Checks are **per health checker**
@@ -120,7 +120,7 @@
 
 ## Multi-Value Routing
 
-- `Multi-Value Routing` lets you configure `Amazon Route53` to return multiple values, such as IP addresses for your web servers, in response to DNS queries. Yu can specify multiple values for almost any record, but multivalue answer routing also lets you check the health of each resource, so `Route53` returns only values for healthy resources
+- `Multi-Value Routing` lets you configure `Amazon Route53` to return multiple values, such as IP addresses for your web servers, in response to DNS queries. You can specify multiple values for almost any record, but multivalue answer routing also lets you check the health of each resource, so `Route53` returns only values for healthy resources
 
 ![Multi-Value Routing](./diagrams/multi-value-routing.png)
 
@@ -159,7 +159,7 @@
 - `R53` accepts your money when doing **Domain Registrar** (annual fee for domain)
 - `R53` allocates 4 Name Servers (NS) when doing **Domain Hosting**
 - `R53` creates a zone file when doing **Domain Hosting** on the above NS
-- `R53` communciates with the registry of the TLD (Top Level Domain) (**Domain Registrart**)
+- `R53` communciates with the registry of the TLD (Top Level Domain) (**Domain Registrar**)
 
 
 ### Both Roles
