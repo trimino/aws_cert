@@ -392,12 +392,12 @@ arn:aws:s3:::catgifs/*
 - 90 days stored by default in **Event History**
 - Enabled **by default** - no cost for 90 day history
 - To customize the service, create one or more **Trails**
-- `Management Events` and `Data Events 
+- `Management Events` and `Data Events`
 	- `Management Events`
 		- provide information about management operations that are performed on resources on your AWS account (create ec2, create vpc, terminate ec2)
 	- `Data Events`
-		- Contain data information about resource operations performed on or in a resource (objects being uploaded to s3, lambda function being invoked). 
-		- Needs to be enabled, 
+		- Contain data information about resource operations performed on or in a resource (objects being uploaded to s3, lambda function being invoked) 
+		- Needs to be enabled
 - **By default** CloudTrail only logs `Management Events`
 - A trail logs events for the AWS region that it is created in. CloudTrail is a regional service
 - Global services (IAM, STS, CloudFront), would be classified as global service events and that would need to be enabled on a trail

@@ -70,7 +70,7 @@ CloudFront is a Content Delivery network (CDN) within AWS.
     - NOT `EC2`
 - `ACM` is a **regional service**
 - Certs cannot leave the region they are generated or imported in
-  - Meaning to use a cert with an `ALB` in `us-east-1` you need a **cert in ACM** in `us-east-2`
+  - Meaning to use a cert with an `ALB` in `us-east-1` you need a **cert in ACM** in `us-east-1`
 - Global services such as `CloudFront` operate as though within `us-east-1`
   - Basically always use `us-east-1`
 
