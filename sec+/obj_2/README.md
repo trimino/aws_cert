@@ -316,3 +316,455 @@ The more services, devices, messages, and third parties you expose, the larger y
 11. Give three forms identity fraud can take.
 12. What is a watering hole attack, and why is defense in depth the recommended countermeasure?
 13. Walk through the six steps of how a misinformation campaign spreads.
+
+## Zero-Day Vulnerabilities (Objective 2.3)
+
+### What Is a Zero-Day?
+
+Almost every operating system and application has **security vulnerabilities that haven't been discovered yet**. People worldwide hunt for them every day — **researchers** (who share findings with developers so patches can be made) and **attackers** (who want to find them *first*).
+
+A **zero-day attack** happens when attackers exploit a vulnerability for which **no patch exists** because the vendor doesn't even know the vulnerability is there. Until a patch is created, the attacker can keep exploiting it freely — and it's very hard to defend against a problem you don't know exists.
+
+- **CVE (Common Vulnerabilities and Exposures)** — A public catalog of known vulnerabilities, including zero-days, at *cve.mitre.org*. Useful for tracking what's circulating.
+- **Real examples (2023):** a Chrome zero-day (memory corruption + sandbox escape); a Microsoft patch for self-signed code running during the UEFI boot process (which Secure Boot should prevent); and three Apple iOS/iPadOS zero-days (sandbox escape, sensitive-information disclosure, arbitrary code execution) — many already exploited in the wild.
+
+### Key Takeaway
+A zero-day's danger is the *gap*: the window between an attacker discovering/exploiting the flaw and the vendor shipping a patch. Once disclosed, the security community races to close it.
+
+
+## Objective 2.4 — Analyze Indicators of Malicious Activity
+
+Objective 2.4 groups attacks into **malware, physical, network, application, cryptographic,** and **password** attacks, plus the **indicators** that reveal them. The sections below follow that structure.
+
+
+## Malware Attacks
+
+### What Is Malware?
+
+**Malware** is a broad term for any software doing bad things to your system. The objectives call out these types: **virus, worm, ransomware, Trojan, rootkit, keylogger, spyware, bloatware,** and **logic bomb**.
+
+- **Types work together, not alone.** A worm might exploit a known vulnerability to install itself, drop a **remote-access backdoor**, and then let the attacker install *more* malware for additional capabilities.
+- **How it runs:** malware needs to execute on your machine — typically a clicked email link or attachment, a malicious pop-up, a **drive-by download** (downloaded just by visiting a site, no click), or a self-propagating **worm**.
+- **Why it exists:** your data has value (personal files, financials, planning docs), and attackers monetize it directly or via ransom.
+- **Two fundamental defenses:** keep a **known-good (offline) backup**, and **keep the OS and applications patched** with up-to-date **anti-malware signatures**.
+
+
+### Ransomware
+- Encrypts all your data and demands payment (often **cryptocurrency**) for the decryption key.
+- The **OS keeps working normally** on purpose — the attacker wants you to see the ransom message.
+- **Defense:** offline backups (so ransomware can't reach and encrypt the backup too), patched OS/apps, and current AV signatures. With a good backup you can wipe and restore.
+
+
+### Virus
+- **Replicates from system to system**, but **requires user action** to start (clicking a link or running an executable). Once running, it spreads through the local file system and across the network.
+- Antivirus watches executables and matches them against **signature files** — keep those updated.
+- **Notable variant — fileless virus:** writes nothing to disk, living entirely in **memory** to evade signature-based AV. A typical chain: user clicks a malicious link → a site exploits a browser/OS vulnerability (e.g., Flash, Java, Windows) → the virus launches **PowerShell** to pull and run further scripts in memory → adds a **registry autostart** so it survives reboots.
+
+
+### Worm
+- **Self-replicates with NO user intervention**, spreading at the **speed of the network** — so infections happen fast and can hit any system at any time.
+- **Defense:** network and host-based firewalls plus **IPS** (must have signatures/processes to recognize the worm) to stop propagation.
+- **Example — WannaCry:** a worm that *also* delivered ransomware. It found vulnerable systems, used the **EternalBlue / SMBv1** vulnerability to install a backdoor, pulled down ransomware to encrypt files, then continued spreading to other vulnerable hosts.
+
+
+### Trojan (Trojan Horse)
+- Software you *think* performs a legitimate function, but which actually installs malware. A **RAT (Remote Access Trojan)** is a Trojan that gives the attacker remote control.
+
+
+### Spyware
+- Malware that **watches everything** you do — browsing habits, on-screen activity — to serve ads, steal personal info, or commit affiliate fraud. It may also install a **keylogger**.
+- **Installed via** peer-to-peer software, fake "security" software, or malicious email links.
+- **Defense:** anti-malware, research software before installing, keep good backups, and use dedicated removal tools (e.g., Malwarebytes) that can both detect and remove it.
+
+
+### Bloatware
+- Apps **pre-installed by the hardware manufacturer** (who is usually paid to include them) — beyond the core OS apps you'd expect.
+- **Security concerns:** wasted storage, programs auto-running at startup (hurting efficiency), and **vulnerabilities present on a brand-new device**.
+- **Removal:** the OS uninstaller, the app's own uninstaller, or — as a last resort — third-party uninstaller software.
+
+
+### Keylogger
+- Captures **every keystroke** (URLs, usernames, passwords, credit-card and financial data) to a file that's periodically sent to the attacker.
+- Effective because **keyboard input isn't encrypted**, even when network traffic and stored files are.
+- Can also capture the **clipboard, screenshots, instant messages, and search queries**. (Often bundled into a RAT such as DarkComet.)
+
+
+### Logic Bomb
+- Malicious code that **waits for a trigger event**, then detonates — a specific **date/time**, or a condition like **a particular user logging in**. Detonation might reboot, erase data, or wipe the system.
+- Usually planted by an **insider** with a specific goal, so it has **no AV signature** and is **hard to detect**.
+- **Defense:** monitor critical OS files for unauthorized changes, and enforce **least privilege** (so users can't install one).
+- **Example — South Korea, March 2013:** a malicious email attachment installed a Trojan; a day later the logic bomb fired at 2:00 PM local time, deleting storage and the **master boot record**. Infected bank ATMs rebooted to "Boot device not found. Please install an operating system on your hard disk."
+
+
+### Rootkit
+- Name comes from the Unix superuser **"root."** A rootkit typically **hides in the OS kernel**, becoming part of the OS itself — so it's **invisible to traditional AV** and won't appear in the process/task list.
+- Some rootkits run as ordinary processes and *can* still be caught by anti-malware; **standalone removal tools** exist for specific variants.
+- **Defense:** **Secure Boot** (in UEFI BIOS) checks the OS signature and confirms the kernel hasn't changed before booting — stopping a rootkit from running at startup.
+
+
+### Malware Comparison Table
+
+| Malware | User action needed? | Defining trait | Key defense |
+|---|---|---|---|
+| **Virus** | Yes (click/run) | Replicates, needs a host action | AV signatures; patching |
+| **Worm** | No | Self-replicates across the network | Firewalls + IPS; patching |
+| **Ransomware** | Varies | Encrypts data, demands payment | Offline backups; patching |
+| **Trojan** | Yes | Disguised as legitimate software | Vet software; anti-malware |
+| **Spyware** | Yes | Watches/steals activity | Anti-malware; trusted sources |
+| **Bloatware** | No (pre-installed) | Unwanted vendor apps | Uninstall promptly |
+| **Keylogger** | Yes | Captures keystrokes | Anti-malware; MFA |
+| **Logic Bomb** | No (insider-planted) | Triggers on an event | File monitoring; least privilege |
+| **Rootkit** | Yes | Hides in the kernel | Secure Boot; removal tools |
+
+### Quick Self-Check
+1. What's the core difference between a virus and a worm?
+2. Why is a *fileless* virus harder for antivirus to catch?
+3. Why does ransomware leave the operating system working?
+4. What makes a logic bomb so difficult to detect, and which actor usually plants one?
+5. Where does a rootkit hide, and what UEFI feature counters it?
+
+
+## Physical Attacks
+
+Security isn't only digital. **Physical access to a computer means full control** — anyone who can touch the machine can circumvent the OS. ("Door locks only keep out the honest people.")
+
+- **Brute force (physical):** forcing a locked door or window to reach infrastructure. Worth testing against your own data center — how hard is it to physically break in?
+- **RFID cloning:** access badges and key fobs commonly use **RFID**. Cloners cost **under \$50** and copy a card in **seconds** — there are documented cases of cloning a badge just by brushing against someone. **Defense:** **multifactor authentication** — a cloned card alone won't supply the PIN or biometrics.
+- **Environmental:** attack the systems' surroundings. Examples: cutting **power** (sometimes from outside the building), tampering with **HVAC** to overheat systems until they auto-shut-down, or triggering **fire-suppression** to cause a denial of service.
+
+
+## Network Attacks
+
+### Denial-of-Service (DoS) and Distributed DoS (DDoS)
+
+A **DoS** forces a service to fail — by **overloading** it or exploiting a **known vulnerability/design flaw**. It can be competitive (knocking a rival offline) or a **smokescreen** while another exploit runs elsewhere. Some DoS conditions are trivial (cutting power, a switching **loop** without spanning tree, saturating a slow link) and some are accidental (a burst water line over the data center).
+
+A **DDoS** uses **many devices worldwide** at once — **botnets** (robot networks of malware-infected machines) the attacker commands with a single instruction. This is an **asymmetric threat**: few attacker resources can overwhelm a much larger target. *(The Zeus botnet peaked at ~3.6 million controlled computers.)*
+
+- **Amplified / Reflected:** send a **small request** that returns a **large response**, multiplying traffic. Common with **NTP, DNS, and ICMP**.
+- **DNS amplification example:** a ~15-character query can return ~1,300 characters (~86× amplification). Attackers use **open DNS resolvers** and **spoof the victim's IP** so the large replies flood the victim.
+
+
+### DNS Attacks
+
+DNS resolves a fully qualified domain name (FQDN) to an IP address. Attackers redirect users to the wrong IP by **poisoning** that resolution. Methods, roughly easiest to hardest:
+
+- **Modify the client host file** — needs access to the machine and elevated rights; the local host file is consulted before querying DNS.
+- **On-path interception** — sit in the middle and answer DNS queries in real time with a malicious IP.
+- **Modify the DNS server** — DNS servers are well protected, so this is **less common**.
+- **Compromise the domain registration** — control *every* DNS record for the domain. **Example — Oct 22, 2016:** attackers changed **36 domains** at a Brazilian bank's registrar for ~6 hours, effectively *becoming* the bank's IP addresses and harvesting credentials and financial data.
+
+**URL hijacking / typosquatting / brandjacking:** registering **misspelled or lookalike domains** (e.g., *professormessor* vs. *professormesser*, a dropped/added letter, or a different TLD like *.org*). Uses include ad revenue, reselling the domain, redirecting to a competitor, fake login pages, and malware. **Don't click email links** — check the domain carefully.
+
+
+### Wireless Attacks
+
+- **Deauthentication attack:** a DoS that repeatedly disconnects users from Wi-Fi. It exploits **802.11 management frames**, which older versions of the standard sent **in the clear** (no encryption), letting an attacker forge them. **Fix:** **802.11ac and newer** encrypt key management frames (disassociate, deauthenticate, channel-switch). Some frames (beacons, probes, authentication, association) still appear in the clear because they must precede encryption.
+- **RF jamming:** a DoS that **interferes with the wireless signal**, lowering the **signal-to-noise ratio** so devices can't hear the access point. Causes range from microwave ovens and fluorescent lights to deliberate jamming (constant, random, legitimate-frame floods, or *reactive* jamming that turns on only when someone transmits). The jammer must be **local**, so it's tracked down by triangulating with a **directional antenna** (and an attenuator to refine direction).
+
+
+### On-Path Attacks (Man-in-the-Middle)
+
+An **on-path attack** puts the attacker **between two devices**, relaying — and optionally **modifying** — traffic in real time, while remaining **invisible** to both victims.
+
+- **ARP poisoning / spoofing:** works on the **local subnet**, and is easy because **ARP has no authentication or encryption**. The attacker sends spoofed ARP replies claiming the gateway's IP maps to the **attacker's MAC address**; victims overwrite their ARP caches, so traffic flows through the attacker.
+- **On-path browser attack (man-in-the-browser):** malware/Trojan **on the victim's own device** acts as a proxy. Because it runs locally, it sees data **in the clear even when the network is encrypted**, then waits for a high-value login (like online banking) and runs hidden sessions.
+
+
+### Credential Replay (Replay Attacks)
+
+A **replay attack** captures legitimate information and **reuses it** to pose as the victim. Capture methods include a **network tap**, **ARP poisoning**, or **malware** on the victim. (The replay itself isn't an on-path attack, but on-path is often used to *gather* the data.)
+
+- **Pass the hash:** capture a username and **password hash** during authentication, then replay them to the server. **Defense:** encrypt the traffic, and **salt** the password so each authentication uses a different salt/hash; configure the server to reject a repeated hash.
+- **Session hijacking / sidejacking:** steal the **session ID** from browser **cookies** and reuse it — the server treats the attacker as the already-logged-in victim. **Defense:** end-to-end encryption (**HTTPS**), browser extensions that force HTTPS, or at minimum a VPN to a concentrator.
+
+
+### Malicious Code
+
+A catch-all for executables, scripts, macro viruses, Trojans, and more. Because the methods are so varied, you need **defense in depth**: anti-malware, firewalls, continuous patching, and **user training**.
+
+- **WannaCry** — used the **SMBv1** vulnerability for arbitrary code execution, then ran ransomware.
+- **British Airways** — attackers placed **22 lines of malicious JavaScript** (**cross-site scripting**) on the checkout page; ~**380,000** customers' cards were potentially exposed.
+- **Estonian Central Health Database** — breached with **SQL injection**, exposing the health data of the entire country.
+
+
+### Network Attack Quick-Reference Table
+
+| Attack | What it does | Key defense |
+|---|---|---|
+| **DoS / DDoS** | Overloads or crashes a service (DDoS uses botnets) | Patching; upstream filtering; redundancy |
+| **Amplified / Reflected** | Small request → large spoofed response floods victim | Secure/close open resolvers; filtering |
+| **DNS attacks** | Redirects users to a malicious IP | Protect host files, registrar accounts; verify domains |
+| **Typosquatting** | Lookalike/misspelled domains | Don't click email links; inspect URLs |
+| **Wireless (deauth / jamming)** | Disconnects or drowns out Wi-Fi | WPA3 / 802.11ac+; locate the source |
+| **On-path / ARP poisoning** | Intercepts and modifies traffic in the middle | Encryption; secure switch/ARP controls |
+| **Credential replay / pass the hash** | Reuses captured credentials | Encryption; salting; reject repeated hashes |
+| **Malicious code** | Code execution via many vectors | Defense in depth; patching; training |
+
+### Quick Self-Check
+1. What makes a DDoS an "asymmetric" threat?
+2. How does DNS amplification turn a small query into a flood aimed at a victim?
+3. Why is ARP poisoning relatively easy to perform?
+4. Which 802.11 weakness enables a deauthentication attack, and what fixed it?
+5. How does salting defeat a pass-the-hash replay?
+
+
+## Application Attacks
+
+- **Injection:** inserting malicious code into input the application fails to validate. The most common is **SQL injection (SQLi)**; others include **HTML, XML,** and **LDAP** injection.
+- **Buffer overflow:** writing **more data than a variable can hold**, so the excess spills into adjacent memory — enabled by missing input checks. It usually just **crashes** the app; but a **reliable, repeatable** overflow is a powerful attack.
+- **Replay:** capturing and re-sending data (a username/hash or a session ID) to gain access; often paired with an on-path attack to gather the data first.
+- **Privilege escalation:** exploiting a bug to gain rights you shouldn't have.
+  - **Vertical** — moving up to **administrator/SYSTEM** rights.
+  - **Horizontal** — moving sideways from one user's access to another user's.
+  - **Defenses:** patch the vulnerability, update AV signatures, **Data Execution Prevention (DEP)** (limits where code can run in memory), and **ASLR** (randomizes memory locations each run). *Example: CVE-2023-29336, a Win32k elevation-of-privilege flaw (May 2023) granting SYSTEM privileges.*
+- **Forgery — Cross-Site Request Forgery (CSRF / XSRF, "sea surf"):** abuses the fact that a site **already trusts your authenticated browser**, tricking the browser into making requests on the attacker's behalf (e.g., a bank funds transfer triggered by a malicious link you click while logged in). **Defense:** an **anti-forgery cryptographic token** required with each request.
+- **Directory traversal:** a **web-server misconfiguration** (or server-software vulnerability) lets an attacker read/write files **outside the web root**. The `../` sequence moves up a directory — seeing `../../windows/system.ini` in a request URL is a classic indicator.
+
+### Quick Self-Check
+1. What single root cause enables both injection and buffer-overflow attacks?
+2. Distinguish vertical from horizontal privilege escalation.
+3. How does an anti-forgery token stop CSRF?
+4. What does the `../` pattern in a web log suggest?
+
+
+## Cryptographic Attacks
+
+Modern algorithms are **public and well-vetted**; if a weakness is found, the algorithm is **abandoned**. So attackers usually target the **implementation**, not the key.
+
+- **Birthday attack → Collision:** based on the **birthday paradox** (in a room of 23 people there's ~50% chance two share a birthday). A **hash collision** is when **two different plaintexts produce the same hash**, typically found by brute force. **Defense:** use a **larger hash output size**. *Example: MD5 (1992) had collisions found by 1996; in Dec 2008 researchers forged a CA-signed certificate via an MD5 collision, and the industry abandoned MD5.*
+- **Downgrade:** force two devices to use **weaker or no encryption**. The classic form is **SSL stripping** (combined with an on-path attack): the attacker keeps the victim on plain **HTTP** while talking **HTTPS** to the server, so the attacker reads and can modify everything — including credentials — passing through.
+
+### Quick Self-Check
+1. What defines a hash collision, and how does a larger hash help?
+2. Why must an attacker also be **on-path** to perform SSL stripping?
+
+
+## Password Attacks
+
+Never store passwords as plain text ("**in the clear**") — anyone who reaches the file or database instantly has everyone's credentials. Store a **hash** instead.
+
+- **Hashing basics:** a variable-length input becomes a **fixed-length** string (a **message digest / fingerprint**). A different input yields a **very different** hash, and the process is **irreversible** — you can't reconstruct the password from the hash. *(SHA-256 is a common choice.)*
+- **Spraying:** try a **few of the most common passwords** across **many accounts** — only a couple of attempts per account, so no lockouts or alarms. Think of it as the **opening move** of a brute force.
+- **Brute force:** try **every possible combination** until a hash matches. **Online** brute force is slow and risks lockouts (maybe one or two tries a day), so attackers **steal the password/hash file and brute-force it offline**, where there are no lockouts and unlimited attempts — limited only by **time and compute**.
+
+### Quick Self-Check
+1. Why are hashes preferable to plaintext for stored passwords, even if an attacker steals the file?
+2. How does a spraying attack avoid triggering account lockouts?
+3. Why is offline brute force so much more dangerous than online?
+
+
+## Indicators of Malicious Activity (Indicators)
+
+An **Indicator of Compromise (IOC)** is evidence giving you **high confidence** that a system has been breached. The objectives list these specific indicators:
+
+- **Account lockout** — locked from failed attempts **you didn't make**, or **administratively disabled** with no authorized reason. May be a setup to social-engineer the **help desk** into resetting the password for the attacker.
+- **Concurrent session usage** — the same user logged in from **two places at once**. (Can be legitimate — multiple devices or a **service login** — and is hard to track; an account-access report, like Gmail's, helps confirm.)
+- **Blocked content** — you suddenly **can't reach security sites or download patches/signatures**, a sign malware has disabled updates to keep itself resident.
+- **Impossible travel** — logins from **far-apart locations in an impossible timeframe** (e.g., Omaha, then Australia minutes later). Spotted by reviewing **authentication logs**.
+- **Resource consumption** — an unexpected **spike in traffic** (e.g., large transfers at 3 AM = likely exfiltration). **Firewall logs** show the flow, IPs, and timeframe — often the first sign of an intruder.
+- **Resource inaccessibility** — a server **crashed** by a vulnerability probe, **network disruption**, **ransomware-encrypted** files, or a **locked account** after a brute-force attempt.
+- **Out-of-cycle logging** — log events at **unexpected times**, such as patches/apps installed **off the normal change schedule**, or off-hours firewall transfers.
+- **Missing logs** — attackers **delete logs** to hide their activity; **alert on missing log data**, since each action normally leaves a log.
+- **Published / documented** — your **private data suddenly appears publicly online**. Often part of ransomware **double extortion**: attackers **exfiltrate** data *before* encrypting it, then threaten to **leak** it unless paid.
+
+
+### Indicator Quick-Reference Table
+
+| Indicator | What you'd notice | Likely meaning |
+|---|---|---|
+| **Account lockout** | Locked without your attempts; admin-disabled | Brute force, or a help-desk reset scam setup |
+| **Concurrent session usage** | Same user in two places at once | Stolen credentials (or legit multi-device) |
+| **Blocked content** | Can't reach security sites/updates | Malware disabling defenses |
+| **Impossible travel** | Logins too far apart, too fast | Compromised credentials |
+| **Resource consumption** | Traffic spikes, odd-hour transfers | Data exfiltration in progress |
+| **Resource inaccessibility** | Crashes, encrypted files, locked accounts | Active exploitation / ransomware |
+| **Out-of-cycle logging** | Events at unexpected times | Unauthorized changes |
+| **Missing logs** | Gaps in log data | Attacker covering tracks |
+| **Published/documented** | Private data appears online | Successful exfiltration / leak |
+
+### Key Takeaway
+No single indicator is proof on its own, but together they tell a story. **Log everything**, **report on it**, and **alert when logs go missing or appear out of cycle** — that's often the only way you'll catch a quiet intrusion.
+
+### Quick Self-Check
+1. Why might an attacker *want* your account to be locked out?
+2. How do firewall logs reveal data exfiltration?
+3. What is "impossible travel," and which logs expose it?
+4. Why are *missing* logs themselves an indicator of compromise?
+5. How does the "published/documented" indicator tie into ransomware double-extortion?
+
+
+## Mitigation Techniques (Objective 2.5)
+
+### What Is Mitigation?
+
+**Mitigation** is the process of **reducing the impact** of a security event — or a *potential* one. The techniques below stack together: the goal is to stop attacks before they happen, limit how far they can spread, and shrink how much an attacker can reach if they do get in.
+
+
+### Segmentation
+
+Breaking the network into **smaller pieces** to limit the scope of any security event.
+
+- **Physical segmentation** — physically separate devices.
+- **Logical segmentation** — commonly **VLANs** on network switches.
+- **Virtual segmentation** — common in cloud and virtual-machine architectures.
+
+**Why segment?**
+- **Performance** — dedicate a subnet to a high-bandwidth application so other traffic doesn't affect its throughput.
+- **Security (strategic)** — e.g., users shouldn't talk **directly** to a database server; they go through an **application server**, which talks to the database. A firewall or control list enforces who can reach each tier.
+- **Compliance** — a mandate may require it. Under **PCI (Payment Card Industry)** compliance, credit-card data must be kept **completely separate** from the rest of the network.
+
+
+### Access Control — ACLs & Permissions
+
+An **Access Control List (ACL)** allows or disallows traffic through a network, operating system, or other technology.
+
+- **Match criteria:** source IP, destination IP, port numbers, time of day, or other details.
+- **Basis:** by **IP address** (certain addresses reach certain addresses; others are blocked) or by **user** (a regular user is denied, while an **administrator/super user** is permitted).
+- **Watch your own access:** account for *all* connections when writing rules — don't build an ACL that **locks you out** of creating future ACLs.
+- **Granularity example:** *Bob* can read files on a resource; *Fred* can access the network; *James* can reach **192.168.1.0/24** using **only TCP 80, 443, and 8088**. That last rule shows how specific controls can get.
+- **ACLs live in operating systems too** — setting file/folder **permissions**, or creating **groups** and adding users to them, is configuring an ACL.
+
+
+### Application Allow List / Deny List
+
+A form of segmentation based on the **applications** themselves — ensuring only legitimate apps run and blocking everything else (Trojans, malware, viruses). Two opposite philosophies:
+
+- **Allow list** — **nothing runs unless it's specifically approved** (restrictive; only what's on the list executes).
+- **Deny list** — **everything runs except what's specifically blocked.** Your **antivirus/anti-malware** is a deny list: it lets everything run until it spots known-bad code, then blocks it.
+
+**How Windows identifies what to allow/deny:**
+- **Application hash** — identifies an app by its **hash**, not its name. If the app changes, the hash no longer matches and the rule won't apply.
+- **Digital signature** — allow apps signed by a trusted publisher (Microsoft, Adobe, Google); block anything unsigned.
+- **Drive path** — allow an app only from a specific directory; block it if it runs from elsewhere.
+- **Network zone** — allow certain apps depending on whether you're on a **private** or **public** network.
+
+
+### Isolation
+
+**Separating a problem system from everything else** so a threat can't spread or reach resources. When endpoint protection (EDR) detects malicious code, it can **isolate the system** and **quarantine** the threat automatically. Configuration enforcement can also isolate a non-compliant device into a **private VLAN** until it's fixed (see *Configuration Enforcement*).
+
+
+### Patching
+
+Stopping an attack **before it happens** by closing known vulnerabilities — which often improves **stability** too.
+
+- Vendors like **Microsoft** release patches **monthly**; application developers and device manufacturers ship their own.
+- **Home/consumer** systems often patch **automatically** (the OS checks, downloads, and installs without user action).
+- **Large organizations** usually **don't** auto-patch — IT **tests patches first**, then deploys them widely.
+- **Emergency patches** ship off-schedule when a vulnerability is severe and being **actively exploited**.
+
+
+### Encryption
+
+Limiting how much usable data an attacker can obtain.
+
+- **File/folder-level encryption** — built into the file system; encrypt just a specific file or folder. In Windows this is **EFS (Encrypting File System)**.
+- **Full Disk Encryption (FDE)** — encrypts the **entire volume**, including the OS and user files. Good for devices that **leave the building**. Tools: **BitLocker** (Windows), **FileVault** (macOS).
+- **Application-level encryption** — the app encrypts its own data, so it's protected **regardless** of whether file-system or full-disk encryption is in place.
+
+
+### Monitoring
+
+Logging everything happening on the network so you can identify security events.
+
+- Monitoring can be **built into** switches, routers, and other devices, or done with a **separate sensor**.
+- Security devices (firewalls, IPS, authentication systems) generate logs automatically.
+- Because logs are **spread across many systems**, consolidate them with a **SIEM (Security Information and Event Manager)** — a central source for reporting and monitoring.
+
+
+### Least Privilege
+
+Limiting each user's rights and permissions to **exactly what their job role requires** — nothing more.
+
+- **Best case:** no one runs with administrative permissions; rights are **elevated temporarily** when needed, then brought back down.
+- **Why it matters:** if malware or an attack hits a user's account, the damage is **limited to what that user can see** — the difference between a breach exposing a *little* data and *all* of it.
+
+
+### Configuration Enforcement
+
+Checking a system's security state, usually at login, via a **posture assessment** before granting access.
+
+- **What it checks:** latest OS version and patches, up-to-date **antivirus/EDR signatures**, local firewall and EDR enabled, and sometimes a **certificate** proving the device is trusted.
+- **If it fails:** the system is **quarantined** or placed in a **private VLAN** where it can be brought up to standard. After fixing, it re-attempts login; once the posture assessment passes, it gets network access.
+
+
+### Decommissioning
+
+Safely retiring equipment that's past its usable life — the concern is **sensitive data left on storage**.
+
+- **Recycle within the org:** an SSD can be moved to another system (you may need to **format** it first).
+- **Sanitize or destroy:** if a drive is no longer needed and may hold sensitive data, **destroying** it guarantees no one can recover the data.
+
+
+### Core Mitigation Quick-Reference
+
+| Technique | Purpose |
+|---|---|
+| **Segmentation** | Limit scope; separate tiers/data (physical, VLAN, virtual) |
+| **Access control (ACL/permissions)** | Allow/deny traffic and resource access by IP, user, port, time |
+| **Application allow/deny list** | Control which apps may run (by hash, signature, path, zone) |
+| **Isolation** | Quarantine a compromised/non-compliant system |
+| **Patching** | Close known vulnerabilities before exploitation |
+| **Encryption** | Protect data at the file, disk, or application level |
+| **Monitoring** | Log and consolidate activity (SIEM) to spot events |
+| **Least privilege** | Limit user rights to the job role; contain breaches |
+| **Configuration enforcement** | Posture-check devices at login; quarantine non-compliant |
+| **Decommissioning** | Remove/destroy sensitive data when retiring equipment |
+
+### Quick Self-Check
+1. Name the three forms of segmentation and one reason (performance, security, compliance) you'd use it.
+2. What four kinds of criteria can an ACL match on?
+3. Contrast an allow list with a deny list — which one is your antivirus?
+4. Why does least privilege limit the *scope* of an attack?
+5. What does a posture assessment check, and what happens to a device that fails it?
+6. When decommissioning a drive with sensitive data you no longer need, what's the safest option?
+
+
+### Hardening Techniques
+
+Hardening means making a device **more secure** by reducing its attack surface. Different platforms (Windows, Linux, macOS, mobile) need their own approach, and there's never one button — you layer many tools for **defense in depth**.
+
+**System hardening best practices (servers & workstations):**
+- **Apply security updates** — the single most significant step; OS and patches, released monthly by most vendors.
+- **Secure user accounts** — enforce a **password policy** (minimum length and complexity, e.g., 8+ characters with upper/lowercase, numbers, special characters).
+- **Limited access** — not every account is an administrator; apply **least privilege**.
+- **Restrict remote access** — permit only an approved **IP address range**; deny others.
+- **Endpoint protection** — run antivirus/anti-malware/EDR.
+
+The objective calls out these specific hardening techniques:
+
+- **Installation of endpoint protection (EDR)** — *Endpoint Detection and Response*. With ~1 million+ new malware variants daily, signatures alone don't scale, so EDR adds **behavioral analysis**, **machine learning**, and **process monitoring** to catch malware with **no signature**. It can perform **root-cause analysis** and then **act automatically** — isolate the system, quarantine the threat, even **roll back to a previous config** — all driven through an **API** and reported to a central console.
+- **Host-based firewall** — a **software** firewall on the OS itself, allowing/blocking **inbound and outbound** traffic per process. Because it sits on the host, it sees data **before/after encryption**, can flag **unknown processes** (a malware sign), and is centrally managed.
+- **Host-based intrusion prevention system (HIPS)** — looks for **known attacks** inbound to the device (often built into EDR/anti-malware). Using **signatures** and **heuristics/behavior**, and with visibility into the OS, it can detect a **buffer overflow**, a **registry change**, or modifications to **core OS files**, then alert and block the process.
+- **Disabling ports/protocols** — every outward-facing service **opens a port**, and each open port is an opportunity for an attacker. **Close as many as possible**; use a firewall (ideally a **next-generation firewall** that controls by *service*, not just port number). Ports can open **without your knowledge** during OS/app installs — beware software that asks you to open **ports 0–65535** (every port). Use a scanner like **Nmap** to find what's actually open.
+- **Default password changes** — routers, switches, firewalls, access points, and app management consoles ship with **default credentials** that attackers can **easily look up**. Some prompt you to change the password on first login, but **not all do** — change them **manually**. Add **multifactor** or **centralized authentication** where possible.
+- **Removal of unnecessary software** — every app carries potential bugs/vulnerabilities, and each has its **own update process**, making them hard to keep current. The easy fix: **delete apps you no longer use** — removing the app removes its security risk.
+- **Encryption** — also a hardening step: file-level (**EFS**), full-disk (**BitLocker**, **FileVault**), network (**VPN**), and built-in application encryption like **HTTPS** in the browser. *(See the Encryption section above.)*
+
+
+### Hardening Checklist
+
+| Hardening technique | What it does |
+|---|---|
+| **Security updates / patching** | Closes known vulnerabilities (most impactful step) |
+| **Endpoint protection (EDR)** | Behavioral + ML detection; auto-isolate, quarantine, roll back |
+| **Host-based firewall** | Per-process inbound/outbound control on the host |
+| **HIPS** | Blocks known attacks; watches OS files, registry, overflows |
+| **Disable ports/protocols** | Closes unused open ports; scan with Nmap |
+| **Default password changes** | Replaces easily-guessed factory credentials |
+| **Remove unnecessary software** | Eliminates unused apps' vulnerabilities and update burden |
+| **Encryption** | Protects data at file, disk, network, and app levels |
+| **Password policy + limited access** | Enforces length/complexity and least privilege |
+| **Restrict remote access** | Permits only approved IP ranges |
+
+### Key Takeaway
+No single control hardens a system. You **layer** them — patch, encrypt, run EDR + host firewall + HIPS, close ports, change defaults, remove unused apps, and enforce least privilege — so that if one layer misses a threat, another stops it. That's **defense in depth**.
+
+### Quick Self-Check
+1. Why is applying security updates considered the most significant hardening step?
+2. How does EDR go beyond traditional signature-based antivirus?
+3. Where does a host-based firewall sit, and why does that give it full visibility?
+4. What can a HIPS detect that a network IPS might miss?
+5. Why is leaving ports 0–65535 open such a bad idea, and how do you find open ports?
+6. Name three places encryption can be applied as a hardening measure.
