@@ -186,3 +186,224 @@ There's no single "most secure" architecture — cloud, on-premises, virtualized
 3. Why does an image backup improve "ease of recovery" over reinstalling from media?
 4. What's the security problem with an "inability to patch," and one way to mitigate it?
 5. Name two backup options for the "power" consideration.
+
+## Secure Enterprise Infrastructure (Objective 3.2)
+
+Given a scenario, you apply security principles to secure infrastructure — deciding **where devices go**, how they **fail**, how they **monitor**, and how remote users **connect securely**.
+
+### Infrastructure Considerations
+
+- **Device placement & security zones** — A **security zone** logically separates devices by **use or access type** rather than by subnet (e.g., *trusted/untrusted*, *internal/external*, or more granular *inside, internet, servers, databases, screened*). Zones make firewall rules easier to read and maintain ("allow trusted → untrusted," "untrusted → screened"). You place devices into the zone that matches their exposure.
+- **Attack surface** — the **sum of all the ways an attacker could get in**: application code, open ports, the authentication process, and human error (one misconfigured firewall rule). The goal is to **minimize** it — audit code, block unnecessary ports, and monitor traffic in real time.
+- **Connectivity** — every device connects to others, so build security into the links: protect **network cabling** (physical + logical), assume someone could **tap** the wire, and use **application-level encryption** plus **IPsec tunnels / a VPN concentrator** for remote and site-to-site links.
+
+### Failure Modes — Fail-Open vs. Fail-Closed
+An inline security device can crash (power, hardware, software bug). What happens to traffic then?
+
+- **Fail-open** — on failure, **traffic keeps flowing** (no security, but the network stays up).
+- **Fail-closed** — on failure, **the connection is severed** (secure, but the network is down).
+
+Most networks prefer fail-open, but not every device defaults that way — **check the documentation**.
+
+### Device Attributes — Active vs. Passive, Inline vs. Tap/Monitor
+- **Inline / active monitoring** — the device sits **in the traffic path** and can **block in real time** (the default for an IPS). Risk: an outage or over-aggressive blocking affects live traffic.
+- **Passive monitoring / tap** — the device gets a **copy** of traffic via a **port mirror (SPAN)** or a physical **network tap**. It **can't block** (it only alerts), but it **can't cause downtime**. An IPS deployed this way effectively behaves like an **IDS**.
+
+### Network Appliances
+
+- **IPS / IDS** — An **IPS (Intrusion Prevention System)** watches traffic in real time and **blocks** exploits (known vulnerabilities, buffer overflows, SQL injection). An **IDS (Intrusion Detection System)** only **alerts** — it can't block.
+- **Jump server** — a hardened, secured device **inside** the network that's **reachable from outside**, used as a stepping stone to manage internal systems (connect to the jump server, then SSH onward). Because it bridges outside-to-inside, it **must be tightly hardened** — compromise it and an attacker reaches everything behind it.
+- **Proxy server** — sits in the middle of a conversation and makes requests **on a user's behalf**, inspecting responses for malicious content (and often **caching** and **URL filtering**).
+  - **Forward proxy** — controls **outbound** user traffic to the internet.
+  - **Reverse proxy** — handles **inbound** traffic to an internal service (e.g., shields a web server, can cache).
+  - **Open proxy** — a third-party proxy open to anyone; a **security risk** (unknown operator may inject ads or malware), so it's often **blocked**.
+- **Load balancer** — distributes load across multiple servers for **efficiency** and **fault tolerance** (a failed server is dropped automatically). Modes: **active/active** (all servers in use) or **active/passive** (standby servers take over on failure).
+- **Sensors & collectors** — **sensors** (built into switches/routers/firewalls/IPS, or standalone) gather statistics and send them to a central **collector**. A **SIEM (Security Information and Event Manager)** is a powerful collector that consolidates, correlates, and reports across diverse devices.
+
+### Port Security — 802.1X & EAP
+Security on the **individual switch interface or wireless connection** — authenticate **before** granting network access.
+
+- **EAP (Extensible Authentication Protocol)** — the authentication **framework** that works across wired and wireless gear.
+- **802.1X** — the IEEE standard that enforces it (a form of **port-based Network Access Control / NAC**). Plug into a port and you get **no access until you authenticate**.
+- **Three roles:** the **supplicant** (client), the **authenticator** (switch/AP), and the **authentication server** (back-end database — often RADIUS, LDAP, TACACS+, or Kerberos).
+
+### Firewall Types
+
+| Firewall | Operates at | What it does |
+|---|---|---|
+| **Traditional (Layer 4)** | OSI **L4** | Allows/denies by **TCP/UDP port number** |
+| **NGFW (Next-Generation)** | OSI **L7** | Decodes the **application layer** — allow/deny by *application* regardless of port (e.g., view Twitter but not post); adds **IPS** and **URL categorization** |
+| **UTM (Unified Threat Mgmt)** | mostly **L4** | "All-in-one": URL filtering, malware/spam blocking, VPN, IDS/IPS, bandwidth shaping — but enabling many features can **slow it down** |
+| **WAF (Web Application Firewall)** | web input | Analyzes **input to web apps**, blocks **SQL injection / XSS**; often **mandated by PCI DSS** |
+
+### Secure Communication & Access
+
+- **VPN (Virtual Private Network)** — encrypts private data across a public network. A **VPN concentrator** (often built into a next-gen firewall) is the endpoint that decrypts traffic into the corporate network.
+- **Tunneling** — the original packet (IP header + data) is **encrypted and wrapped** in new headers so it can cross the public network:
+  - **IPsec** — wraps data with an IPsec header/trailer + new IP header; classic for **site-to-site** VPNs.
+  - **TLS/SSL** — runs over **TCP 443**, so it passes through firewalls easily; common for **remote-access** VPNs from a single device (client- or browser-based, can be **always-on**).
+- **Remote access vs. site-to-site** — SSL/TLS VPNs = **remote-access** (one device → concentrator); IPsec VPNs between firewalls = **site-to-site** (no client software; encryption is automatic between sites).
+- **SD-WAN (Software-Defined WAN)** — builds flexible WAN paths so remote sites reach **cloud apps directly** instead of hair-pinning through a central data center.
+- **SASE (Secure Access Service Edge)** — the "next-generation VPN": security services live **in the cloud next to the apps**, with a **SASE client** on each device securely connecting users (corporate, home, or mobile) to any cloud service.
+- **Selection of effective controls** — organizations often combine these: SSL VPN for users, IPsec site-to-site for offices, SD-WAN for cloud reach, and SASE to secure it all. The right mix depends on the apps and connectivity.
+
+### Key Takeaway
+Securing infrastructure is about **placement and posture**: put devices in the right **zone**, shrink the **attack surface**, decide how things **fail** (open vs. closed) and **monitor** (inline vs. tap), pick the right **firewall layer** (L4 vs. L7), and **encrypt the links** (VPN/IPsec/TLS, extended to the cloud with SD-WAN + SASE).
+
+### Quick Self-Check
+1. How does a security zone differ from a subnet?
+2. A device crashes fail-closed — what happens to the network, and why might you still want that?
+3. Inline vs. tap monitoring: which can block, and which can't cause downtime?
+4. Why must a jump server be especially well hardened?
+5. Forward vs. reverse proxy — which protects an internal web server from inbound traffic?
+6. What lets an NGFW allow Twitter viewing but block posting, when both use the same port?
+7. Name the three 802.1X roles and one protocol an authentication server might use.
+8. Which VPN style is "remote-access" and which is "site-to-site"?
+9. What problem does SD-WAN solve, and what does SASE add on top?
+
+
+## Protecting Data (Objective 3.3)
+
+Comparing concepts and strategies to protect data — **what kind** of data it is, **how sensitive** it is, **what state** it's in, and **which methods** secure it.
+
+### Data Types
+- **Regulated** — a **third party sets the protection rules** (e.g., PCI DSS for credit cards; government laws on storage and retention).
+- **Trade secret** — secrets and processes known only to the organization; high-value target.
+- **Intellectual property** — often visible to others but protected by **copyright/trademark** law.
+- **Legal information** — mixes **public** records with **private** details (PII inside proceedings), often stored separately.
+- **Financial information** — sensitive whether it's a company's internal numbers or an individual's accounts and payments.
+- **Human- vs. non-human-readable** — a document is human-readable; a **barcode or encoded data** is not (sometimes combined, e.g., a barcode with printed digits).
+
+> Related categories you'll see: **proprietary** (unique to the org), **PII (Personally Identifiable Information)** — name, DOB, biometrics, etc., and **PHI (Protected Health Information)** — health records and related payments.
+
+### Data Classifications
+Assigning a **sensitivity level** drives access rules:
+
+| Classification | Meaning |
+|---|---|
+| **Public / unclassified** | Anyone may view it |
+| **Sensitive** | Includes IP, PII, PHI — needs care |
+| **Confidential** | More sensitive; requires extra access |
+| **Private / Restricted** | Extra rights/permissions or an **NDA** to access |
+| **Critical** | Must **always be available**; build processes to keep it up |
+
+### States of Data
+| State | Where it lives | Notes |
+|---|---|---|
+| **Data at rest** | On a storage device (HDD/SSD/flash) | Protect with **full-disk / file / database encryption** + **permissions** |
+| **Data in transit** | Crossing the network | Protect with **TLS**, **IPsec VPNs**, firewalls/IPS |
+| **Data in use** | In **RAM / CPU** | Almost always **decrypted** while processed — attackers target it (e.g., **Target 2013**: 110M cards pulled from point-of-sale memory despite encryption at rest and in transit) |
+
+- **Data sovereignty** — data stored in a country is subject to **that country's laws**. E.g., **GDPR** requires data on EU citizens to be **stored in the EU**.
+- **Geolocation** — determine a user/device's location (GPS, 802.11, mobile provider) to **grant or restrict** access accordingly.
+
+### Methods to Secure Data
+- **Geographic restrictions / geofencing** — allow access only from approved locations (IP subnet, GPS, or 802.11 lookup); e.g., certain data only reachable **inside a corporate facility**.
+- **Encryption** — turns **plaintext** into unreadable **ciphertext** (with a large change called *confusion*); reversible only with the **decryption key**.
+- **Hashing** — a **one-way** fixed-length **fingerprint / message digest**; can't be reversed to the original. Used for **password storage** and **file-integrity** checks; two different inputs giving the same hash is a **collision** (a reason to retire weak algorithms). *Even a one-character change yields a completely different SHA-256 output.*
+- **Obfuscation** — make something understandable **hard to read** while it still works the same (e.g., obfuscated source code); attackers also use it to hide malicious scripts.
+- **Masking** — hide part of the data (e.g., a receipt showing only the **last four digits** of a card); the rest is starred out, though the processor can still see the full value behind the scenes.
+- **Tokenization** — replace sensitive data with a **token** that has no derivable relationship to the original (e.g., phone/smartwatch payments send a **one-time token** via NFC, not your real card number) — **no encryption math involved**.
+- **Segmentation** — split data into **smaller, separate databases** so a single breach doesn't expose everything, and apply **different security per database** by sensitivity.
+- **Permission restrictions** — tie **rights/permissions** to the authenticated account (strong authentication first, then groups/file permissions limiting what each user can reach).
+
+### Key Takeaway
+Match the protection to the data: classify it by **sensitivity**, know its **state** (at rest / in transit / **in use** is the soft spot), respect **sovereignty**, and layer the right **methods** — encryption and hashing for confidentiality/integrity, masking/tokenization for exposure, segmentation and permissions to limit blast radius.
+
+### Quick Self-Check
+1. What makes data "regulated," and give one example.
+2. Which classification means the data must always be available?
+3. Why is "data in use" attractive to attackers even when encryption is in place?
+4. What does GDPR require regarding where EU citizens' data is stored?
+5. Hashing vs. encryption — which is reversible, and which produces a non-reversible fingerprint?
+6. How does tokenization differ from encryption, and why is a payment token safe if captured?
+7. How does segmentation limit the damage of a single breach?
+
+
+## Resilience & Recovery (Objective 3.4)
+
+Why resilience and recovery matter in architecture — keeping systems **up** despite failures and getting **back up** quickly after disasters.
+
+### High Availability — Clustering vs. Load Balancing
+**High availability (HA)** keeps systems **always on**: if one fails, another running beside it takes the load instantly (beyond simple redundancy, which may sit in a box until needed). HA costs more (extra systems, upgraded power, higher-quality parts). Two related approaches:
+
+| | **Server clustering** | **Load balancing** |
+|---|---|---|
+| **Awareness** | Servers know about each other; act as **one cluster** | Servers **don't know** each other; the load balancer manages them |
+| **OS** | Usually identical OSes; **shared storage** keeps them in sync | Can be mixed OSes |
+| **Scaling** | Add/remove cluster nodes in real time | Add/remove servers behind the balancer |
+
+### Site Resiliency
+A **recovery site** lets you move operations away from a disaster:
+
+| Site | What's there | Recovery speed |
+|---|---|---|
+| **Hot** | Exact replica — all hardware, apps, **constantly synced data** | Near-immediate |
+| **Warm** | Some equipment and data; bring the rest | Medium |
+| **Cold** | Empty building with power/lighting; bring everything | Slow |
+
+- **Geographic dispersion** — keep the recovery site **far away** so one regional event (hurricane, flood) can't take out both — though distance complicates moving **equipment, data, and people**.
+
+### Platform Diversity & Multi-Cloud
+- **Platform diversity** — use **different operating systems** for different roles so a single OS vulnerability can't affect everything (e.g., Linux + Windows in the data center; macOS + Windows on clients).
+- **Multi-cloud systems** — spread services across providers (AWS, Azure, Google Cloud); an outage or security issue at one provider doesn't take you fully down.
+
+### Continuity of Operations (COOP)
+A **non-technical fallback** for when the technology simply isn't available — manual transactions, paper receipts, phoning in card approvals. These processes must be **designed in advance**.
+
+### Capacity Planning
+Match **supply to demand** — too little causes slowdowns/outages; too much wastes money. Plan across:
+- **People** — humans are hard to ramp up/down (hiring, training take time and money).
+- **Technology** — choose tech that **scales** (load balancers + multiple servers, splittable databases, cloud services).
+- **Infrastructure** — physical builds need shipping/racking/testing; the cloud lets you **rightsize on demand**.
+
+### Recovery Testing
+Test the disaster-recovery plan **regularly**, with a defined scope that won't touch production:
+
+- **Tabletop exercise** — walk through the steps **on paper / around a table** (cheap; surfaces gaps without a real recovery).
+- **Failover test** — verify redundant systems **switch over automatically** (multiple ISPs, routers, firewalls, switches, links).
+- **Simulation** — test security with realistic scenarios, e.g., a **phishing simulation** to see whether automated systems and users catch it.
+- **Parallel processing** — spread transactions across **multiple CPUs/systems** for efficiency *and* resilience (one processor failing doesn't stop the work).
+
+### Backups
+Plan the variables: **how much** data, **what media**, **where stored**, **what software**, and **what schedule**.
+
+- **Onsite vs. offsite** — onsite = fast restore, cheaper, no WAN needed; offsite = protected from a local disaster, recoverable from anywhere. Many orgs use **both**.
+- **Frequency** — hourly/daily/weekly/monthly, often by how much the data changes; multiple **backup sets** at different intervals.
+- **Encryption** — encrypt backups (especially **offsite/cloud**) so stolen media is useless (the classic *stolen backup tapes from a car* scenario) — but **keep the recovery keys**.
+- **Snapshots** — one-click point-in-time copy, popular for **VMs/cloud**; behaves like an **incremental** backup (only changes), easy to take before big changes and to roll back.
+- **Recovery (testing restores)** — actually **test** that you can restore *and* that apps can use the restored data — restoring is only half the test.
+- **Replication** — copies data to one or many locations in **near real time**; great for keeping a **hot site** current.
+- **Journaling** — write data to a **journal first**, then to the database, so a **power loss mid-write doesn't corrupt** the database (it replays the journal on restart).
+
+### Power Resiliency
+- **UPS (Uninterruptible Power Supply)** — battery backup for **short** outages; also rides through **blackouts, brownouts (low voltage), and surges**. Types range from **offline/standby** → **line-interactive** → **online/double-conversion**. Can signal a **graceful shutdown** as the battery drains.
+- **Generator** — **long-term** power for as long as there's fuel; can power a building or marked "generator" outlets.
+- **Use both** — the UPS covers the ~minute it takes a generator to **ramp up** after an outage.
+
+### Resilience Quick-Reference
+
+| Mechanism | Purpose |
+|---|---|
+| **HA (clustering / load balancing)** | Stay up when a component fails |
+| **Hot / warm / cold site** | Relocate operations after a disaster |
+| **Geographic dispersion** | One event can't hit primary and recovery |
+| **Platform diversity / multi-cloud** | Avoid single-OS / single-provider failure |
+| **COOP** | Non-technical fallback processes |
+| **Capacity planning** | Right-size people, tech, infrastructure |
+| **Tabletop / failover / simulation** | Validate the recovery plan |
+| **Backups (snapshot/replication/journaling)** | Recover lost or corrupted data |
+| **UPS + generator** | Bridge short and long power outages |
+
+### Key Takeaway
+Resilience keeps you **running** (HA, diversity, redundant power); recovery gets you **back** (sites, backups, tested plans). The recurring exam themes: **clustering vs. load balancing**, **hot vs. warm vs. cold**, **why you encrypt and *test* backups**, and **UPS for the gap, generator for the long haul**.
+
+### Quick Self-Check
+1. In clustering the servers know about each other — what's different about load balancing?
+2. Order hot/warm/cold sites by recovery speed and by cost.
+3. Why does geographic dispersion matter for a recovery site?
+4. How does platform diversity reduce risk from a single vulnerability?
+5. What is a tabletop exercise, and why is it cheaper than a full failover test?
+6. Why must you *test restores* rather than just trust that backups exist?
+7. How does journaling prevent database corruption during a power loss?
+8. Why deploy both a UPS and a generator instead of just one?
